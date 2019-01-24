@@ -1,0 +1,54 @@
+﻿<#@ template language="VB" optionexplicit="False" designerbimlpath="biml/Packages/Package/Tasks" #>
+<#@ property name="TaskName" type="string" #>
+<#@ property name="CompName" type="string" #>
+<#@ property name="CompPath" type="string" #>
+<#@ property name="Params" type="string" #>
+<# TargetServerVersion = "150"  #>
+<# if CompName = "" then #>
+<!-- Task(s) in Assembly:
+<#= GetCompNames() #>-->
+<# else #>
+<CustomTask Name="<#= TaskName #>"  CreationName="<#= CompName & ", " & System.Reflection.Assembly.loadfile(CompPath).FullName #>">
+					<ObjectData>&lt;InnerObject&gt;
+						<#= InnerObject #>
+						&lt;TargetServerVersion Type="3" Value="<#= TargetServerVersion #>" /&gt;
+						&lt;/InnerObject&gt;</ObjectData>
+				</CustomTask>
+<# end if #>
+
+<#+ Function InnerObject() as string	
+	   For Each prop In System.Reflection.Assembly.loadfile(CompPath).GetTypes().Where(Function(c) c.ToString() = CompName).First.GetProperties().Where(Function(c) c.Name <> "Version" And c.Name <> "ExecutionValue" And c.Name <> "TargetServerVersion") 
+	   	   	InnerObject = InnerObject & "&lt;" & prop.Name & " Type=""" & GetPropertyType(prop.PropertyType) & """ Value=""" & GetValue(prop.Name,prop.PropertyType) & """ /&gt;" & vbCrLf
+	   Next 
+end function 
+
+	Function GetCompNames() as string
+		for Each ComponentProperty In System.Reflection.Assembly.loadfile(CompPath).GetTypes().Where(function(c) c.GetProperties().Where(function(d) d.PropertyType.ToString = "Microsoft.SqlServer.Dts.Runtime.DTSTargetServerVersion" or d.propertytype.tostring = "Microsoft.SqlServer.Dts.ManagedMsg.ErrorSupport").Any) 
+			GetCompNames = GetCompNames & ComponentProperty.ToString() & vbcrlf
+		next
+	end function	 
+	
+	Function GetValue(Param As String, ptype as Type) As String
+	ParamValueOutput = ""
+	   for each pair in  Params.Split("||") 
+	       ParamName = pair.split("=")(0)
+	       ParamValue =""
+	   	   If ParamName.Length+1 < pair.length then ParamValue = pair.SubString(ParamName.Length+1)
+		   If ParamName.length > 0 and ParamValue.Length > 0 and ParamName.ToUpper = Param.ToUpper then ParamValueOutput  =ParamValue
+	   next 
+	  if ParamValueOutput = "" and ptype.ToString = "System.Boolean" then ParamValueOutput ="0"
+	return ParamValueOutput
+	End Function 
+	
+	Function GetPropertyType(pType As Type) As String
+	Select Case ptype.ToString 
+		Case "System.String"
+			GetPropertyType = "8"
+		Case "System.Boolean"
+			GetPropertyType = "11"
+		Case "System.Int32"
+			GetPropertyType = "3"
+		Case Else
+			GetPropertyType = "UNTRANSLATED: " & ptype.ToString()
+	End Select 
+	End Function #>

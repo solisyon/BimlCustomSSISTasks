@@ -1,0 +1,70 @@
+﻿<#@ template designerbimlpath="biml/Packages/Package/Tasks" #>
+<#@ property name="TaskName" type="string" #>
+<#@ property name="CompName" type="string" #>
+<#@ property name="CompPath" type="string" #>
+<#@ property name="Params" type="string" #>
+<# string TargetServerVersion = @"150";  #>
+<# if (CompName == "") { #>
+<!-- Task(s) in Assembly:
+<#= GetCompNames() #>-->
+<# }
+   else 
+   {#>
+<CustomTask Name="<#= TaskName #>"  CreationName="<#= CompName + ", " + System.Reflection.Assembly.LoadFile(CompPath).FullName #>">
+					<ObjectData>&lt;InnerObject&gt;
+						<#= InnerObject() #>
+						&lt;TargetServerVersion Type="3" Value="<#= TargetServerVersion #>" /&gt;
+						&lt;/InnerObject&gt;</ObjectData>
+				</CustomTask>
+<# } #>
+
+<#+ 
+public string GetCompNames() {
+	string result = @""; 
+	foreach (var ComponentProperty in System.Reflection.Assembly.LoadFile(CompPath).GetTypes().Where(c => c.GetProperties().Where(d => d.PropertyType.ToString() == "Microsoft.SqlServer.Dts.Runtime.DTSTargetServerVersion" || d.PropertyType.ToString() == "Microsoft.SqlServer.Dts.ManagedMsg.ErrorSupport").Any())) {
+		result = result + ComponentProperty.ToString() + "\n";
+	}
+	return result;
+}
+
+public string InnerObject() {
+	string result = @"";
+	foreach (var prop in System.Reflection.Assembly.LoadFile(CompPath).GetTypes().Where(c => c.ToString() == CompName).First().GetProperties().Where(d => d.Name != "Version" && d.Name != "ExecutionValue" && d.Name != "TargetServerVersion")) {
+	   	   	result = result + "&lt;" + prop.Name + " Type=\"" + GetPropertyType(prop.PropertyType) + "\" Value=\"" + GetValue(prop.Name,prop.PropertyType) + "\" /&gt;\n";
+	 }  
+	return result;
+}
+
+public string GetValue(string Param, Type pType) {
+	string result = @"";
+	string ParamName = @"";
+	string ParamValue = @"";
+	foreach (var pair in Params.Split(new[] { "||" }, StringSplitOptions.None)) {
+	ParamName = pair.Split('=')[0];
+	ParamValue ="";
+	if (ParamName.Length+1 < pair.Length) { ParamValue = pair.Substring(ParamName.Length+1); }
+	if (ParamName.Length > 0 && ParamValue.Length > 0 && ParamName.ToUpper() == Param.ToUpper()) { result =ParamValue; }
+	}
+	if (result == "" && pType.ToString() == "System.Boolean") { result ="0"; }
+	return result;
+}
+
+public string GetPropertyType(Type pType) {
+	string result = @"";
+	switch (pType.ToString()) {
+		case "System.String":
+			result = "8";
+			break;
+		case "System.Boolean":
+			result = "11";
+			break;
+		case "System.Int32":
+			result = "3";
+			break;
+		default:
+			result = "UNTRANSLATED: " + pType.ToString();
+			break;
+	}
+	return result;
+}
+#>

@@ -1,0 +1,14 @@
+﻿<# String TaskName = @"My ZIP Task";
+   String CompPath = @"C:\Temp\oh22is.DTS.Task.ZIP2017.dll";
+   String CompName = @"oh22is.DTS.Task.ZIP.ZipTask";
+   String Params = @"Action=ZIP||FileFolder=FOLDER||Input=C:\Temp\ZipFolder||Output=C:\Temp\sample.zip"; #>
+<Biml xmlns="http://schemas.varigence.com/biml.xsd">
+<Packages>
+
+	<Package Name="TestPackage_ZIP" ProtectionLevel="EncryptSensitiveWithUserKey">
+      <Tasks>
+		 <#= CallBimlScript("GetTask_CBS.biml",TaskName,CompName,CompPath,Params) #>
+	 </Tasks>
+    </Package>
+  </Packages>
+</Biml>

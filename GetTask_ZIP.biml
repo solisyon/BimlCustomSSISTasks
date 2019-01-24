@@ -1,0 +1,14 @@
+﻿<#@ template language="VB" optionexplicit="False" #>
+<# TaskName = "My ZIP Task"
+   	CompPath = "C:\Temp\oh22is.DTS.Task.ZIP2017.dll"
+	CompName = "oh22is.DTS.Task.ZIP.ZipTask"
+	Params = "Action=ZIP||FileFolder=FOLDER||Input=C:\Temp\ZipFolder||Output=C:\Temp\sample.zip" #>
+<Biml xmlns="http://schemas.varigence.com/biml.xsd">
+<Packages>
+	<Package Name="TestPackage_ZIP" ProtectionLevel="EncryptSensitiveWithUserKey">
+      <Tasks>
+		 <#= CallBimlScript("GetTask_VB_CBS.biml",TaskName,CompName,CompPath,Params) #>
+	 </Tasks>
+    </Package>
+  </Packages>
+</Biml>
